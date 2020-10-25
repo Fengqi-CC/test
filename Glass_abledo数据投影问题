@@ -1,0 +1,30 @@
+'''
+最近因为用到albedo数据，所以下载了Glass的分辨率为0.05°的Albedo数据。但是发现尽管数据集来自于MODIS，但是Glass的hdf文件头文件与MODIS并不相同，投影也是自定义
+也不能用MRT转出来。
+'''
+解决方法：
+简单说来就是去modis的官网下一幅一样分辨率同样范围同样行列数（7200*3600）的影像，然后MRT/arcgis转成自己想要的投影，扔到matlab里面用代码，重新写成tif就可以了。
+
+clear all
+clc
+
+import matlab.io.hdfeos.*
+import matlab.io.hdf4.*
+% Get spatial reference  
+
+year = 2018
+[A,R] = geotiffread('K:\\Urbanization\\Albedo2\\projection\\reference.tif');
+% hdf file reading
+filenames = ls(['K:\\Urbanization\\Albedo2\\Albedo2000-2018\\Albedo_tif\\',num2str(year),'\\*.tif']);
+[m,n] = size(filenames);
+
+for i = 1:m
+    [Albedo,R1] = geotiffread(['K:\\Urbanization\\Albedo2\\Albedo2000-2018\\Albedo_tif\\',num2str(year),'\\',filenames(i,:)]);
+    info = geotiffinfo(['K:\\Urbanization\\Albedo2\\Albedo2000-2018\\Albedo_tif\\',num2str(year),'\\',filenames(i,:)]);
+    [lon,lat] = pixcenters (info);
+    Albedo2 = double(Albedo)/10000;
+    Albedo2(Albedo2<0)=nan;
+    geotiffwrite(['K:\\Urbanization\\Albedo2\\Albedo2000-2018\\Albedo_TIFF_PRJ\\',num2str(year),'\\',filenames(i,1:7),'_',num2str(i),'.tif'],Albedo2,R);
+    disp(['K:\\Urbanization\\Albedo2\\Albedo2000-2018\\Albedo_TIFF_PRJ\\',num2str(year),'\\',filenames(i,1:7),'_',num2str(i),'.tif'])
+    i = i+1;
+end
