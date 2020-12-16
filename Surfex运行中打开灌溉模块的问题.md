@@ -6,7 +6,7 @@
  &NAM_AGRI
  LAGRIP=.TRUE.,
  /
-2.在namelist的EXSEG1.nam文件中不需要做任何修改。 
- 
+2.在namelist的EXSEG1.nam文件中不需要做任何修改/不需要添加灌溉。 
+3.PRE_REAL1.nam也不需要添加灌溉。
  
 
