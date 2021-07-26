@@ -13,8 +13,8 @@ library(maptools)
 vals1 = seq(109.78161,124.96637,(124.96637-109.78161)/340)
 vals2 = seq(28.50404,43.13213,(43.13213-28.50404)/410)
 
-vals1 = seq(110.78161,125.96637,(125.96637-110.78161)/340)
-vals2 = seq(28.50404,43.13213,(43.13213-28.50404)/410)
+vals1 = seq(108.88161,124.16637,(124.16637-108.88161)/340)
+vals2 = seq(28.60404,43.23213,(43.23213-28.60404)/410)
 
 longitude <- ncdim_def( name = 'longitude', units = 'degrees_east', vals1[1:340] )
 latitude <- ncdim_def( name = 'latitude', units = 'degrees_north', vals2[1:410])
