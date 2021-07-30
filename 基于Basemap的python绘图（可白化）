@@ -1,0 +1,83 @@
+import numpy as np
+import xarray as xr
+import os, cmaps
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+import cartopy.io.shapereader as shpreader
+import shapefile
+from matplotlib.patches import Polygon
+from cartopy.util import add_cyclic_point
+from scipy.stats.mstats import ttest_ind
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch
+from mpl_toolkits.basemap import Basemap
+import maskout
+import matplotlib.ticker as ticker
+
+with xr.open_dataset("Tmax_d_u.nc") as f1:
+    pre = f1['Tmax_d_u'][:,: ,:]
+    lat, lon = f1['latitude'], f1['longitude']
+    pre2d = np.array(pre).reshape(pre.shape[0],pre.shape[1] *pre.shape[2])
+    #del pre
+
+with xr.open_dataset("Tmax_d_d.nc") as f2:
+    pre1 = f2['Tmax_d_d'][:,: ,:]
+    lat, lon = f2['latitude'], f1['longitude']
+    pre66 = np.array(pre1).reshape(pre1.shape[0],pre1.shape[1] *pre1.shape[2])
+    #del pre
+
+
+from scipy.stats.mstats import ttest_ind
+t,p = ttest_ind(pre66, pre2d, 0, equal_var=True)
+t1 = t.reshape(len(lat),len(lon))
+p1 = p.reshape(len(lat),len(lon))
+area = np.where(p < 0.1)
+
+## 生成地图网格
+pre_cor_cyc, lon_cyc = add_cyclic_point(t1, coord = lon)
+nx, ny = np.meshgrid(lon_cyc, lat)
+nx=nx[:,0:340]
+ny=ny[:,0:340]
+
+uu = np.mean((pre2d-pre66),0)
+uu1 = uu.reshape(len(lat),len(lon))
+
+fig = plt.figure(figsize=(9,9))
+ax= fig.add_subplot(111)
+m = Basemap(llcrnrlon=110.0,#地图左边经度
+    llcrnrlat=28.5,#地图下方纬度
+    urcrnrlon=124.0,#地图右边经度
+    urcrnrlat=43.0,#地图上方纬度
+    resolution = None,#分辨率，这里设置为无
+    projection = 'cyl')#投影方式：默认，圆柱投影
+
+#掩膜
+m.readshapefile('K:/2 Irrigation+urbanization/data_process/Drawing_python/country1','country1')
+m.readshapefile('K:/2 Irrigation+urbanization/data_process/Drawing_python/Wgs1984','Wgs1984')
+
+cs = m.contourf(nx, ny, uu1, cmap=plt.cm.Spectral_r)
+#bar=m.colorbar(cs)
+
+clip = maskout.shp2clip(cs,ax,r'country1','China')
+
+#显著性打点
+nx2= np.array(nx).reshape(nx.shape[0]*nx.shape[1],)
+ny2= np.array(ny).reshape(ny.shape[0]*ny.shape[1],)
+m.scatter(nx2[area], ny2[area], marker = 'x', s = 15, c = 'k', alpha = 0.4)
+
+parallels = np.arange(28,43,3)#纬线
+m.drawparallels(parallels,labels=[True,False,False,False],color='gray',dashes=[1, 3])
+meridians = np.arange(110,124,3)#经线
+m.drawmeridians(meridians,labels=[True,True,False,True],color='gray',dashes=[1, 3])
+
+ax.set_title(u' 2018 temperature',color='k',fontsize= 30)
+ax.tick_params(labelsize=30,which='major',width=4,length=20)
+plt.minorticks_on()
+#plt.tick_params(labelsize=30,which='minor',width=2,length=8)
+plt.tick_params(labelsize=30,which='major',width=4,length=20)
+plt.colorbar(cs, shrink = 1.2, orientation='horizontal',pad = 0.06,fraction= 0.04)
+#设置标题
+plt.rcParams.update({'font.size':18})
+plt.show()
